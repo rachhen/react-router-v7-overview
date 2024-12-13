@@ -68,7 +68,11 @@ function LoginPage() {
           </Button>
           <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">
+            <Link
+              to="/register"
+              viewTransition
+              className="text-primary hover:underline"
+            >
               Register
             </Link>
           </p>
