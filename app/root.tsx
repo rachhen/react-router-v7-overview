@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
   isRouteErrorResponse,
   Links,
@@ -5,10 +6,17 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import stylesheet from "./app.css?url";
+import {
+  PreventFlashOnWrongTheme,
+  ThemeProvider,
+  useTheme,
+} from "./contexts/theme";
+import { themeSessionResolver } from "./utils/sessions.server";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -24,13 +32,30 @@ export const links: Route.LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export async function loader({ request }: Route.LoaderArgs) {
+  const { getTheme } = await themeSessionResolver(request);
+
+  return {
+    theme: getTheme(),
+  };
+}
+
+function Document({
+  ssrTheme,
+  children,
+}: {
+  ssrTheme: boolean;
+  children: React.ReactNode;
+}) {
+  const [theme] = useTheme();
+
   return (
-    <html lang="en">
+    <html lang="en" className={clsx(theme)}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
+        <PreventFlashOnWrongTheme ssrTheme={ssrTheme} />
         <Links />
       </head>
       <body>
@@ -39,6 +64,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Scripts />
       </body>
     </html>
+  );
+}
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/resources/theme">
+      <Document ssrTheme={Boolean(data.theme)}>{children}</Document>
+    </ThemeProvider>
   );
 }
 
