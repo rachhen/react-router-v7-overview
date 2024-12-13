@@ -18,6 +18,8 @@ WORKDIR /app
 RUN bun run build
 
 FROM dependencies-env
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 COPY ./package.json bun.lockb /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
